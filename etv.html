@@ -406,8 +406,8 @@
         }
 
         .team-logo {
-            width: 36px;
-            height: 36px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
             border-radius: 6px;
             background: var(--bg-card);
@@ -420,11 +420,20 @@
         }
 
         /* ETV Cell */
+        .etv-cell {
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
         .etv-value {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.3rem;
             letter-spacing: 1px;
-            color: var(--accent-gold);
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         /* Loading State */
@@ -484,8 +493,8 @@
             }
 
             .team-logo {
-                width: 28px;
-                height: 28px;
+                width: 40px;
+                height: 40px;
             }
         }
 
@@ -654,6 +663,35 @@
         let defaultWeights = {};
         let sortColumn = 'etv';
         let sortDirection = 'desc';
+
+        // Parse number handling negatives, parentheses, and currency
+        function parseNumber(value) {
+            if (value === null || value === undefined || value === '') return 0;
+            let str = String(value).trim();
+            
+            // Check for parentheses notation for negatives: (123) = -123
+            const isParenthesesNegative = str.startsWith('(') && str.endsWith(')');
+            if (isParenthesesNegative) {
+                str = str.slice(1, -1);
+            }
+            
+            // Check for leading minus sign
+            const hasMinusSign = str.startsWith('-');
+            
+            // Remove currency symbols, commas, spaces
+            str = str.replace(/[$,\s]/g, '');
+            
+            // Parse the number
+            let num = parseFloat(str);
+            if (isNaN(num)) return 0;
+            
+            // Apply negative if parentheses notation was used
+            if (isParenthesesNegative && num > 0) {
+                num = -num;
+            }
+            
+            return num;
+        }
 
         // CSV Parser
         function parseCSV(text) {
@@ -905,10 +943,10 @@
                     return true;
                 })
                 .map((row, idx) => {
-                    const etvValue = parseFloat(String(row['Estimated Trade Value (ETV)'] || '0').replace(/[^0-9.-]/g, '')) || 0;
-                    const contractETV = parseFloat(String(row['Contract ETV'] || '0').replace(/[^0-9.-]/g, '')) || 0;
-                    const performanceETV = parseFloat(String(row['Performance ETV'] || '0').replace(/[^0-9.-]/g, '')) || 0;
-                    const ageETV = parseFloat(String(row['Age ETV'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    const etvValue = parseNumber(row['Estimated Trade Value (ETV)']);
+                    const contractETV = parseNumber(row['Contract ETV']);
+                    const performanceETV = parseNumber(row['Performance ETV']);
+                    const ageETV = parseNumber(row['Age ETV']);
                     
                     const teamStr = row['Team'] || '';
                     const teamAbbr = findTeamAbbr(teamStr);
@@ -991,10 +1029,16 @@
                 return;
             }
 
+            // Calculate min/max ETV for color gradient
+            const etvValues = filtered.map(p => p.calculatedETV);
+            const minETV = Math.min(...etvValues);
+            const maxETV = Math.max(...etvValues);
+
             tbody.innerHTML = filtered.map((p, idx) => {
                 const displayRank = idx + 1;
                 const logoUrl = teamLogos[p.teamAbbr] || '';
                 const teamDisplay = teamNames[p.teamAbbr] || p.team;
+                const etvColor = getETVColor(p.calculatedETV, minETV, maxETV);
 
                 return `
                     <tr>
@@ -1016,13 +1060,42 @@
                             </div>
                         </td>
                         <td>
-                            <span class="etv-value">${p.calculatedETV.toFixed(2)}</span>
+                            <div class="etv-cell" style="background: ${etvColor};">
+                                <span class="etv-value">${p.calculatedETV.toFixed(2)}</span>
+                            </div>
                         </td>
                     </tr>
                 `;
             }).join('');
 
             updateSortHeaders();
+        }
+
+        // Get ETV gradient color based on value relative to min/max
+        function getETVColor(value, minETV, maxETV) {
+            // Handle edge cases
+            if (minETV === maxETV) return 'rgba(128, 128, 128, 0.3)';
+            
+            // Normalize value to 0-1 range
+            const range = maxETV - minETV;
+            const normalized = (value - minETV) / range;
+            
+            // Color stops: dark red (0) -> light red -> neutral -> light green -> dark green (1)
+            if (normalized <= 0.5) {
+                // Red side: 0 = dark red, 0.5 = neutral
+                const intensity = normalized * 2; // 0 to 1
+                const red = Math.round(180 - (intensity * 80)); // 180 to 100
+                const green = Math.round(50 + (intensity * 50)); // 50 to 100
+                const alpha = 0.7 - (intensity * 0.4); // 0.7 to 0.3
+                return `rgba(${red}, ${green}, 50, ${alpha})`;
+            } else {
+                // Green side: 0.5 = neutral, 1 = dark green
+                const intensity = (normalized - 0.5) * 2; // 0 to 1
+                const red = Math.round(100 - (intensity * 60)); // 100 to 40
+                const green = Math.round(100 + (intensity * 80)); // 100 to 180
+                const alpha = 0.3 + (intensity * 0.4); // 0.3 to 0.7
+                return `rgba(${red}, ${green}, 50, ${alpha})`;
+            }
         }
 
         // Update sort header indicators
