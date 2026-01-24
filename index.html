@@ -737,24 +737,59 @@
             if (!teamStr) return null;
             const upper = teamStr.toUpperCase().trim();
             
-            // Direct match
+            // Direct match for abbreviation
             if (teamLogos[upper]) return upper;
             
-            // Check if it contains an abbreviation
-            for (const abbr of Object.keys(teamLogos)) {
-                if (upper === abbr || upper.includes(abbr)) {
+            // Exact team name matches (check full name first)
+            for (const [abbr, name] of Object.entries(teamNames)) {
+                if (upper === name.toUpperCase()) {
                     return abbr;
                 }
             }
             
-            // Try matching team name parts
-            for (const [abbr, name] of Object.entries(teamNames)) {
-                const nameParts = name.toLowerCase().split(' ');
-                const teamLower = teamStr.toLowerCase();
-                if (nameParts.some(p => teamLower.includes(p) && p.length > 3)) {
-                    return abbr;
+            // Check for specific unique identifiers for each team
+            const teamIdentifiers = {
+                'ATL': ['HAWKS', 'ATLANTA'],
+                'BOS': ['CELTICS', 'BOSTON'],
+                'BKN': ['NETS', 'BROOKLYN'],
+                'CHA': ['HORNETS', 'CHARLOTTE'],
+                'CHI': ['BULLS', 'CHICAGO'],
+                'CLE': ['CAVALIERS', 'CAVS', 'CLEVELAND'],
+                'DAL': ['MAVERICKS', 'MAVS', 'DALLAS'],
+                'DEN': ['NUGGETS', 'DENVER'],
+                'DET': ['PISTONS', 'DETROIT'],
+                'GSW': ['WARRIORS', 'GOLDEN STATE'],
+                'HOU': ['ROCKETS', 'HOUSTON'],
+                'IND': ['PACERS', 'INDIANA'],
+                'LAC': ['CLIPPERS', 'LA CLIPPERS'],
+                'LAL': ['LAKERS', 'LOS ANGELES LAKERS'],
+                'MEM': ['GRIZZLIES', 'MEMPHIS'],
+                'MIA': ['HEAT', 'MIAMI'],
+                'MIL': ['BUCKS', 'MILWAUKEE'],
+                'MIN': ['TIMBERWOLVES', 'WOLVES', 'MINNESOTA'],
+                'NOP': ['PELICANS', 'NEW ORLEANS'],
+                'NYK': ['KNICKS', 'NEW YORK KNICKS', 'NEW YORK'],
+                'OKC': ['THUNDER', 'OKLAHOMA', 'OKLAHOMA CITY'],
+                'ORL': ['MAGIC', 'ORLANDO'],
+                'PHI': ['76ERS', 'SIXERS', 'PHILADELPHIA'],
+                'PHX': ['SUNS', 'PHOENIX'],
+                'POR': ['BLAZERS', 'TRAIL BLAZERS', 'PORTLAND'],
+                'SAC': ['KINGS', 'SACRAMENTO'],
+                'SAS': ['SPURS', 'SAN ANTONIO'],
+                'TOR': ['RAPTORS', 'TORONTO'],
+                'UTA': ['JAZZ', 'UTAH'],
+                'WAS': ['WIZARDS', 'WASHINGTON']
+            };
+            
+            // Check each team's unique identifiers
+            for (const [abbr, identifiers] of Object.entries(teamIdentifiers)) {
+                for (const id of identifiers) {
+                    if (upper.includes(id)) {
+                        return abbr;
+                    }
                 }
             }
+            
             return null;
         }
 
