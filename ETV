@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Estimated Trade Value (ETV)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --bg-hover: #22222e;
+            --accent-gold: #c9a227;
+            --accent-gold-dim: rgba(201, 162, 39, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --border-color: #2a2a3a;
+            --positive: #22c55e;
+            --negative: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+        }
+
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            letter-spacing: 4px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .header h1 span {
+            color: var(--accent-gold);
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Weights Panel */
+        .weights-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .weights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .weights-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+        }
+
+        .weights-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            font-family: 'Barlow', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: #d4ad2f;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .weights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .weight-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .weight-item:hover {
+            border-color: var(--accent-gold-dim);
+        }
+
+        .weight-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .weight-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-input {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .weight-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px var(--accent-gold-dim);
+        }
+
+        .weight-suffix {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .total-weight {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .total-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .total-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .total-value.valid {
+            color: var(--positive);
+        }
+
+        .total-value.invalid {
+            color: var(--negative);
+        }
+
+        /* Search and Filters */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 16px 14px 48px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .filter-dropdown {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 40px 14px 16px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23606070' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            min-width: 180px;
+        }
+
+        .filter-dropdown:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-card);
+        }
+
+        th {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s ease;
+        }
+
+        th:hover {
+            color: var(--accent-gold);
+        }
+
+        th.sorted {
+            color: var(--accent-gold);
+        }
+
+        th .sort-icon {
+            display: inline-block;
+            margin-left: 6px;
+            opacity: 0.5;
+        }
+
+        th.sorted .sort-icon {
+            opacity: 1;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Contract Type Badge */
+        .contract-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .contract-badge.rookie { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .contract-badge.standard { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .contract-badge.max { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+        .contract-badge.supermax { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .contract-badge.veteran { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .contract-badge.extension { background: rgba(20, 184, 166, 0.2); color: #2dd4bf; }
+        .contract-badge.default { background: rgba(100, 100, 120, 0.2); color: #a0a0b0; }
+
+        /* Player Cell */
+        .player-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Team Cell */
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .team-logo {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: var(--bg-card);
+            padding: 4px;
+        }
+
+        .team-name {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* ETV Cell */
+        .etv-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px 16px;
+            }
+
+            .weights-panel {
+                padding: 20px;
+            }
+
+            .weights-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            th, td {
+                padding: 12px 16px;
+            }
+
+            .team-logo {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        /* Rank Column */
+        .rank-cell {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            width: 60px;
+        }
+
+        .rank-cell.top-10 {
+            color: var(--accent-gold);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>NBA <span>ESTIMATED TRADE VALUE</span></h1>
+            <p>Customize weights to calculate your own player trade values</p>
+        </header>
+
+        <div class="weights-panel">
+            <div class="weights-header">
+                <h2 class="weights-title">WEIGHT CONFIGURATION</h2>
+                <div class="weights-actions">
+                    <button class="btn btn-secondary" onclick="resetWeights()">Reset Defaults</button>
+                    <button class="btn btn-primary" onclick="applyWeights()">Apply Weights</button>
+                </div>
+            </div>
+            <div class="weights-grid" id="weightsGrid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Loading weights...</span>
+                </div>
+            </div>
+            <div class="total-weight">
+                <span class="total-label">Total Weight:</span>
+                <span class="total-value" id="totalWeight">0%</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search players...">
+            </div>
+            <select class="filter-dropdown" id="teamFilter">
+                <option value="">All Teams</option>
+            </select>
+            <select class="filter-dropdown" id="contractFilter">
+                <option value="">All Contracts</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-sort="rank">RANK <span class="sort-icon">↓</span></th>
+                            <th data-sort="contract">CONTRACT <span class="sort-icon">↕</span></th>
+                            <th data-sort="player">PLAYER <span class="sort-icon">↕</span></th>
+                            <th data-sort="team">TEAM <span class="sort-icon">↕</span></th>
+                            <th data-sort="etv" class="sorted">ETV <span class="sort-icon">↓</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="5">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <span>Loading player data...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NBA Team logos mapping
+        const teamLogos = {
+            'ATL': 'https://cdn.nba.com/logos/nba/1610612737/global/L/logo.svg',
+            'BOS': 'https://cdn.nba.com/logos/nba/1610612738/global/L/logo.svg',
+            'BKN': 'https://cdn.nba.com/logos/nba/1610612751/global/L/logo.svg',
+            'CHA': 'https://cdn.nba.com/logos/nba/1610612766/global/L/logo.svg',
+            'CHI': 'https://cdn.nba.com/logos/nba/1610612741/global/L/logo.svg',
+            'CLE': 'https://cdn.nba.com/logos/nba/1610612739/global/L/logo.svg',
+            'DAL': 'https://cdn.nba.com/logos/nba/1610612742/global/L/logo.svg',
+            'DEN': 'https://cdn.nba.com/logos/nba/1610612743/global/L/logo.svg',
+            'DET': 'https://cdn.nba.com/logos/nba/1610612765/global/L/logo.svg',
+            'GSW': 'https://cdn.nba.com/logos/nba/1610612744/global/L/logo.svg',
+            'HOU': 'https://cdn.nba.com/logos/nba/1610612745/global/L/logo.svg',
+            'IND': 'https://cdn.nba.com/logos/nba/1610612754/global/L/logo.svg',
+            'LAC': 'https://cdn.nba.com/logos/nba/1610612746/global/L/logo.svg',
+            'LAL': 'https://cdn.nba.com/logos/nba/1610612747/global/L/logo.svg',
+            'MEM': 'https://cdn.nba.com/logos/nba/1610612763/global/L/logo.svg',
+            'MIA': 'https://cdn.nba.com/logos/nba/1610612748/global/L/logo.svg',
+            'MIL': 'https://cdn.nba.com/logos/nba/1610612749/global/L/logo.svg',
+            'MIN': 'https://cdn.nba.com/logos/nba/1610612750/global/L/logo.svg',
+            'NOP': 'https://cdn.nba.com/logos/nba/1610612740/global/L/logo.svg',
+            'NYK': 'https://cdn.nba.com/logos/nba/1610612752/global/L/logo.svg',
+            'OKC': 'https://cdn.nba.com/logos/nba/1610612760/global/L/logo.svg',
+            'ORL': 'https://cdn.nba.com/logos/nba/1610612753/global/L/logo.svg',
+            'PHI': 'https://cdn.nba.com/logos/nba/1610612755/global/L/logo.svg',
+            'PHX': 'https://cdn.nba.com/logos/nba/1610612756/global/L/logo.svg',
+            'POR': 'https://cdn.nba.com/logos/nba/1610612757/global/L/logo.svg',
+            'SAC': 'https://cdn.nba.com/logos/nba/1610612758/global/L/logo.svg',
+            'SAS': 'https://cdn.nba.com/logos/nba/1610612759/global/L/logo.svg',
+            'TOR': 'https://cdn.nba.com/logos/nba/1610612761/global/L/logo.svg',
+            'UTA': 'https://cdn.nba.com/logos/nba/1610612762/global/L/logo.svg',
+            'WAS': 'https://cdn.nba.com/logos/nba/1610612764/global/L/logo.svg'
+        };
+
+        const teamNames = {
+            'ATL': 'Atlanta Hawks',
+            'BOS': 'Boston Celtics',
+            'BKN': 'Brooklyn Nets',
+            'CHA': 'Charlotte Hornets',
+            'CHI': 'Chicago Bulls',
+            'CLE': 'Cleveland Cavaliers',
+            'DAL': 'Dallas Mavericks',
+            'DEN': 'Denver Nuggets',
+            'DET': 'Detroit Pistons',
+            'GSW': 'Golden State Warriors',
+            'HOU': 'Houston Rockets',
+            'IND': 'Indiana Pacers',
+            'LAC': 'LA Clippers',
+            'LAL': 'Los Angeles Lakers',
+            'MEM': 'Memphis Grizzlies',
+            'MIA': 'Miami Heat',
+            'MIL': 'Milwaukee Bucks',
+            'MIN': 'Minnesota Timberwolves',
+            'NOP': 'New Orleans Pelicans',
+            'NYK': 'New York Knicks',
+            'OKC': 'Oklahoma City Thunder',
+            'ORL': 'Orlando Magic',
+            'PHI': 'Philadelphia 76ers',
+            'PHX': 'Phoenix Suns',
+            'POR': 'Portland Trail Blazers',
+            'SAC': 'Sacramento Kings',
+            'SAS': 'San Antonio Spurs',
+            'TOR': 'Toronto Raptors',
+            'UTA': 'Utah Jazz',
+            'WAS': 'Washington Wizards'
+        };
+
+        // Weight factor to ETV column mapping
+        const weightToColumn = {
+            'Contract': 'Contract ETV',
+            'Performance': 'Performance ETV',
+            'Age': 'Age ETV'
+        };
+
+        // State
+        let rawData = [];
+        let processedData = [];
+        let weights = {};
+        let defaultWeights = {};
+        let sortColumn = 'etv';
+        let sortDirection = 'desc';
+
+        // CSV Parser
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = parseCSVLine(lines[0]);
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((h, idx) => {
+                        row[h.trim()] = values[idx];
+                    });
+                    data.push(row);
+                }
+            }
+            return { headers, data };
+        }
+
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim());
+            return values;
+        }
+
+        // Find team abbreviation from team string
+        function findTeamAbbr(teamStr) {
+            if (!teamStr) return null;
+            const upper = teamStr.toUpperCase().trim();
+            
+            // Direct match
+            if (teamLogos[upper]) return upper;
+            
+            // Check if it contains an abbreviation
+            for (const abbr of Object.keys(teamLogos)) {
+                if (upper === abbr || upper.includes(abbr)) {
+                    return abbr;
+                }
+            }
+            
+            // Try matching team name parts
+            for (const [abbr, name] of Object.entries(teamNames)) {
+                const nameParts = name.toLowerCase().split(' ');
+                const teamLower = teamStr.toLowerCase();
+                if (nameParts.some(p => teamLower.includes(p) && p.length > 3)) {
+                    return abbr;
+                }
+            }
+            return null;
+        }
+
+        // Get contract badge class
+        function getContractClass(contractType) {
+            if (!contractType) return 'default';
+            const ct = contractType.toLowerCase();
+            if (ct.includes('rookie')) return 'rookie';
+            if (ct.includes('supermax') || ct.includes('super max') || ct.includes('super-max')) return 'supermax';
+            if (ct.includes('max')) return 'max';
+            if (ct.includes('veteran') || ct.includes('vet min')) return 'veteran';
+            if (ct.includes('extension') || ct.includes('ext')) return 'extension';
+            if (ct.includes('standard') || ct.includes('regular')) return 'standard';
+            return 'default';
+        }
+
+        // Extract weights from data (from Weight and Weight Percent columns)
+        function extractWeights(data) {
+            weights = {};
+            defaultWeights = {};
+
+            data.forEach(row => {
+                const weightName = row['Weight'];
+                const weightPercent = row['Weight Percent'];
+                
+                if (weightName && weightPercent) {
+                    // Parse percent value (handle both "33%" and "33" and "0.33" formats)
+                    let percentValue = parseFloat(String(weightPercent).replace('%', '').trim());
+                    if (!isNaN(percentValue)) {
+                        // If value is less than 1, it's likely a decimal (0.33 = 33%)
+                        if (percentValue > 0 && percentValue < 1) {
+                            percentValue = percentValue * 100;
+                        }
+                        // Normalize the weight name
+                        const normalizedName = weightName.trim();
+                        weights[normalizedName] = percentValue;
+                        defaultWeights[normalizedName] = percentValue;
+                    }
+                }
+            });
+
+            renderWeights();
+        }
+
+        // Render weight controls
+        function renderWeights() {
+            const grid = document.getElementById('weightsGrid');
+            
+            if (Object.keys(weights).length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-muted);">No weight data found</p>';
+                return;
+            }
+
+            grid.innerHTML = '';
+
+            Object.entries(weights).forEach(([name, value]) => {
+                const div = document.createElement('div');
+                div.className = 'weight-item';
+                div.innerHTML = `
+                    <label class="weight-label">${name}</label>
+                    <div class="weight-input-wrapper">
+                        <input type="number" class="weight-input" 
+                            data-weight="${name}" 
+                            value="${value}" 
+                            min="0" max="100" step="1">
+                        <span class="weight-suffix">%</span>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+
+            // Add event listeners
+            grid.querySelectorAll('.weight-input').forEach(input => {
+                input.addEventListener('input', updateTotalWeight);
+                input.addEventListener('change', updateTotalWeight);
+            });
+
+            updateTotalWeight();
+        }
+
+        // Update total weight display
+        function updateTotalWeight() {
+            const inputs = document.querySelectorAll('.weight-input');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+
+            const totalEl = document.getElementById('totalWeight');
+            totalEl.textContent = total.toFixed(0) + '%';
+            totalEl.className = 'total-value ' + (Math.abs(total - 100) < 0.5 ? 'valid' : 'invalid');
+        }
+
+        // Reset weights to defaults
+        function resetWeights() {
+            weights = { ...defaultWeights };
+            renderWeights();
+            recalculateETV();
+            renderTable();
+        }
+
+        // Apply weights and recalculate
+        function applyWeights() {
+            const inputs = document.querySelectorAll('.weight-input');
+            inputs.forEach(input => {
+                const name = input.dataset.weight;
+                weights[name] = parseFloat(input.value) || 0;
+            });
+
+            recalculateETV();
+            renderTable();
+        }
+
+        // Recalculate ETV based on new weights
+        function recalculateETV() {
+            processedData.forEach(player => {
+                let newETV = 0;
+                
+                // Calculate weighted sum of component ETVs
+                Object.entries(weights).forEach(([weightName, weightPercent]) => {
+                    const colName = weightToColumn[weightName];
+                    if (colName && player.componentETVs[colName] !== undefined) {
+                        const originalWeight = defaultWeights[weightName] || 0;
+                        if (originalWeight > 0) {
+                            // Get base value by dividing component by original weight
+                            const componentValue = player.componentETVs[colName];
+                            const baseValue = componentValue / (originalWeight / 100);
+                            // Apply new weight
+                            newETV += baseValue * (weightPercent / 100);
+                        }
+                    }
+                });
+
+                player.calculatedETV = newETV;
+            });
+
+            // Re-sort
+            sortData();
+        }
+
+        // Sort data
+        function sortData() {
+            processedData.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch (sortColumn) {
+                    case 'rank':
+                        return sortDirection === 'asc' ? a.rank - b.rank : b.rank - a.rank;
+                    case 'player':
+                        aVal = a.player || '';
+                        bVal = b.player || '';
+                        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    case 'team':
+                        aVal = a.team || '';
+                        bVal = b.team || '';
+                        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    case 'contract':
+                        aVal = a.contractType || '';
+                        bVal = b.contractType || '';
+                        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    case 'etv':
+                    default:
+                        aVal = a.calculatedETV || 0;
+                        bVal = b.calculatedETV || 0;
+                        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+
+            // Update ranks
+            processedData.forEach((player, idx) => {
+                player.rank = idx + 1;
+            });
+        }
+
+        // Process raw data into structured format
+        function processData(data) {
+            processedData = data
+                .filter(row => {
+                    // Only include rows that have a Player value and ETV
+                    const player = row['Player'];
+                    const etv = row['Estimated Trade Value (ETV)'];
+                    if (!player || !etv) return false;
+                    // Make sure it's numeric ETV (not a header or label)
+                    const etvNum = parseFloat(String(etv).replace(/[^0-9.-]/g, ''));
+                    if (isNaN(etvNum)) return false;
+                    return true;
+                })
+                .map((row, idx) => {
+                    const etvValue = parseFloat(String(row['Estimated Trade Value (ETV)'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    const contractETV = parseFloat(String(row['Contract ETV'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    const performanceETV = parseFloat(String(row['Performance ETV'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    const ageETV = parseFloat(String(row['Age ETV'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    
+                    const teamStr = row['Team'] || '';
+                    const teamAbbr = findTeamAbbr(teamStr);
+
+                    return {
+                        rank: idx + 1,
+                        contractType: row['Contract Type'] || '',
+                        player: row['Player'] || '',
+                        team: teamStr,
+                        teamAbbr: teamAbbr,
+                        originalETV: etvValue,
+                        calculatedETV: etvValue,
+                        componentETVs: {
+                            'Contract ETV': contractETV,
+                            'Performance ETV': performanceETV,
+                            'Age ETV': ageETV
+                        }
+                    };
+                });
+
+            // Sort by ETV descending
+            sortData();
+
+            // Populate filters
+            populateFilters();
+        }
+
+        // Populate filter dropdowns
+        function populateFilters() {
+            const teams = [...new Set(processedData.map(p => p.teamAbbr).filter(Boolean))].sort();
+            const contracts = [...new Set(processedData.map(p => p.contractType).filter(Boolean))].sort();
+
+            const teamFilter = document.getElementById('teamFilter');
+            teamFilter.innerHTML = '<option value="">All Teams</option>';
+            teams.forEach(t => {
+                teamFilter.innerHTML += `<option value="${t}">${teamNames[t] || t}</option>`;
+            });
+
+            const contractFilter = document.getElementById('contractFilter');
+            contractFilter.innerHTML = '<option value="">All Contracts</option>';
+            contracts.forEach(c => {
+                contractFilter.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+        }
+
+        // Get filtered data
+        function getFilteredData() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const team = document.getElementById('teamFilter').value;
+            const contract = document.getElementById('contractFilter').value;
+
+            return processedData.filter(p => {
+                if (search && !p.player.toLowerCase().includes(search) && 
+                    !p.team.toLowerCase().includes(search)) return false;
+                if (team && p.teamAbbr !== team) return false;
+                if (contract && p.contractType !== contract) return false;
+                return true;
+            });
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const filtered = getFilteredData();
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                                <p>No players found matching your criteria</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((p, idx) => {
+                const displayRank = idx + 1;
+                const logoUrl = teamLogos[p.teamAbbr] || '';
+                const teamDisplay = teamNames[p.teamAbbr] || p.team;
+
+                return `
+                    <tr>
+                        <td class="rank-cell ${displayRank <= 10 ? 'top-10' : ''}">${displayRank}</td>
+                        <td>
+                            <span class="contract-badge ${getContractClass(p.contractType)}">
+                                ${p.contractType || 'N/A'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="player-cell">
+                                <span class="player-name">${p.player}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="team-cell">
+                                ${logoUrl ? `<img src="${logoUrl}" alt="${teamDisplay}" class="team-logo" onerror="this.style.display='none'">` : ''}
+                                <span class="team-name">${teamDisplay}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="etv-value">${p.calculatedETV.toFixed(2)}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateSortHeaders();
+        }
+
+        // Update sort header indicators
+        function updateSortHeaders() {
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                const col = th.dataset.sort;
+                th.classList.toggle('sorted', col === sortColumn);
+                th.querySelector('.sort-icon').textContent = 
+                    col === sortColumn ? (sortDirection === 'asc' ? '↑' : '↓') : '↕';
+            });
+        }
+
+        // Handle column sort
+        function handleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = column === 'etv' ? 'desc' : 'asc';
+            }
+            sortData();
+            renderTable();
+        }
+
+        // Load data from Google Sheets
+        async function loadData() {
+            const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9jJpsamj56RIR756PoJSOaRgPSc9yDZ5nkpWUjO-ECjRMGsBq_Q-_s4vPcpfCSg/pub?gid=1384166762&single=true&output=csv';
+            
+            try {
+                const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error('Failed to fetch data');
+                
+                const text = await response.text();
+                const { headers, data } = parseCSV(text);
+                
+                rawData = data;
+                
+                // Extract weights from the Weight and Weight Percent columns
+                extractWeights(data);
+                
+                // Process player data
+                processData(data);
+                
+                // Render the table
+                renderTable();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('weightsGrid').innerHTML = `
+                    <p style="color: var(--negative);">Error loading weight data</p>
+                `;
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+                                </svg>
+                                <p>Error loading data. Please try again later.</p>
+                                <p style="font-size: 0.85rem; margin-top: 8px;">${error.message}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+        document.getElementById('teamFilter').addEventListener('change', renderTable);
+        document.getElementById('contractFilter').addEventListener('change', renderTable);
+
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => handleSort(th.dataset.sort));
+        });
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
